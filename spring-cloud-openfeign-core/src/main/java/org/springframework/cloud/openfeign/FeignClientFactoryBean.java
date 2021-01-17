@@ -326,8 +326,10 @@ class FeignClientFactoryBean
 		}
 	}
 
+	// 加上ribbon包装.
 	protected <T> T loadBalance(Feign.Builder builder, FeignContext context,
 			HardCodedTarget<T> target) {
+		// 1. 拿到client
 		Client client = getOptional(context, Client.class);
 		if (client != null) {
 			builder.client(client);
@@ -362,7 +364,7 @@ class FeignClientFactoryBean
 		FeignContext context = applicationContext.getBean(FeignContext.class);
 		Feign.Builder builder = feign(context);
 
-		// 2. 把URL拼接一下
+		// 2. 把URL拼接一下, 用loadBalance方法和ribbon结合起来.
 		if (!StringUtils.hasText(url)) {
 			if (!name.startsWith("http")) {
 				url = "http://" + name;
@@ -370,13 +372,15 @@ class FeignClientFactoryBean
 			else {
 				url = name;
 			}
+			// 拼一个路径
 			url += cleanPath();
-			// 拼装好了直接就返回了.
+			// 3. 使用loadBalancer
 			return (T) loadBalance(builder, context,
+					// 把(feignClient的接口, service名字, 未解析的url)包装一个 Target
 					new HardCodedTarget<>(type, name, url));
 		}
 
-		// 3. option: 如果由url就开始:
+		// 3. 如果配置了URL就不用结合ribbon+eureka了.:
 		if (StringUtils.hasText(url) && !url.startsWith("http")) {
 			url = "http://" + url;
 		}
