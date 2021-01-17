@@ -53,9 +53,15 @@ import org.springframework.util.StringUtils;
  * @author Venil Noronha
  * @author Gang Li
  * @author Michal Domagala
+ *
+ * 猜测, 这是扫描FeignClient的类
  */
 class FeignClientsRegistrar
-		implements ImportBeanDefinitionRegistrar, ResourceLoaderAware, EnvironmentAware {
+		implements ImportBeanDefinitionRegistrar, // 向spring注册bean.
+	// 拿到resource
+	ResourceLoaderAware,
+	// 拿到spring
+	EnvironmentAware {
 
 	// patterned after Spring Integration IntegrationComponentScanRegistrar
 	// and RibbonClientsConfigurationRegistgrar
@@ -133,18 +139,23 @@ class FeignClientsRegistrar
 		this.resourceLoader = resourceLoader;
 	}
 
+	// TODO 注册入口: 这个这个 注册bean了.
 	@Override
 	public void registerBeanDefinitions(AnnotationMetadata metadata,
 			BeanDefinitionRegistry registry) {
+		// 1. 注册configuration里面 @EnableFeignClients注解里面配置的 给 feign clients的 配置: 没有配置就不会多注册配置.
 		registerDefaultConfiguration(metadata, registry);
+		// 2. 注册feignClient
 		registerFeignClients(metadata, registry);
 	}
 
 	private void registerDefaultConfiguration(AnnotationMetadata metadata,
 			BeanDefinitionRegistry registry) {
+		// 1. 这里拿到@EnableFeignClients这里面的5个属性值, 一般我们没有配置, 就是没有的.
 		Map<String, Object> defaultAttrs = metadata
 				.getAnnotationAttributes(EnableFeignClients.class.getName(), true);
 
+		// 2. 所以一般也不会进入这里.
 		if (defaultAttrs != null && defaultAttrs.containsKey("defaultConfiguration")) {
 			String name;
 			if (metadata.hasEnclosingClass()) {
@@ -162,13 +173,17 @@ class FeignClientsRegistrar
 			BeanDefinitionRegistry registry) {
 
 		LinkedHashSet<BeanDefinition> candidateComponents = new LinkedHashSet<>();
+		// 1. 拿到config的属性
 		Map<String, Object> attrs = metadata
 				.getAnnotationAttributes(EnableFeignClients.class.getName());
+		// 这个没有用啊????
 		AnnotationTypeFilter annotationTypeFilter = new AnnotationTypeFilter(
 				FeignClient.class);
+		// 2. 扫描FeignClient
 		final Class<?>[] clients = attrs == null ? null
 				: (Class<?>[]) attrs.get("clients");
 		if (clients == null || clients.length == 0) {
+			// 2.1 扫描resource里所有的FeignClient
 			ClassPathScanningCandidateComponentProvider scanner = getScanner();
 			scanner.setResourceLoader(this.resourceLoader);
 			scanner.addIncludeFilter(new AnnotationTypeFilter(FeignClient.class));
@@ -178,34 +193,41 @@ class FeignClientsRegistrar
 			}
 		}
 		else {
+			// 2.2 @EnableFeignClient注解内手动配置的feignClient
 			for (Class<?> clazz : clients) {
 				candidateComponents.add(new AnnotatedGenericBeanDefinition(clazz));
 			}
 		}
 
+		// 3. 拿到了所有的候选Bean之后, 就开始做事情了.
 		for (BeanDefinition candidateComponent : candidateComponents) {
 			if (candidateComponent instanceof AnnotatedBeanDefinition) {
 				// verify annotated class is an interface
+				// 1. 校验, 必须标注的是接口
 				AnnotatedBeanDefinition beanDefinition = (AnnotatedBeanDefinition) candidateComponent;
 				AnnotationMetadata annotationMetadata = beanDefinition.getMetadata();
 				Assert.isTrue(annotationMetadata.isInterface(),
 						"@FeignClient can only be specified on an interface");
-
+				// 2. 拿到@FeignClient注解里的属性
 				Map<String, Object> attributes = annotationMetadata
 						.getAnnotationAttributes(FeignClient.class.getCanonicalName());
-
+				// 先拿到serviceId
 				String name = getClientName(attributes);
+				// 3. 加载client自己的config. Decoder/Encoder/Contract...之类的. 一般没有.
 				registerClientConfiguration(registry, name,
 						attributes.get("configuration"));
 
+				// 这里就是具体的注册feignClient的逻辑了. 其实就是注册了一个FeignClientFactoryBean
 				registerFeignClient(registry, annotationMetadata, attributes);
 			}
 		}
 	}
 
+	// 其实就是注册了一个FeignClientFactoryBean
 	private void registerFeignClient(BeanDefinitionRegistry registry,
 			AnnotationMetadata annotationMetadata, Map<String, Object> attributes) {
 		String className = annotationMetadata.getClassName();
+		// 其实就是注册了一个FeignClientFactoryBean
 		BeanDefinitionBuilder definition = BeanDefinitionBuilder
 				.genericBeanDefinition(FeignClientFactoryBean.class);
 		validate(attributes);
@@ -340,6 +362,7 @@ class FeignClientsRegistrar
 		return null;
 	}
 
+	// 拿到serviceId
 	private String getClientName(Map<String, Object> client) {
 		if (client == null) {
 			return null;

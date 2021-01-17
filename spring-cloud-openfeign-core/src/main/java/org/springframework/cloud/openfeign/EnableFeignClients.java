@@ -34,11 +34,13 @@ import org.springframework.context.annotation.Import;
  * @author Spencer Gibb
  * @author Dave Syer
  * @since 1.0
+ *
+ * 这里是Feign配置的入口, 感觉这里就是spring-cloud-feign的入口, 看起.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented
-@Import(FeignClientsRegistrar.class)
+@Import(FeignClientsRegistrar.class) // 这里引入了FeignClientsRegistrar, 应该是扫描引入@FeignClient的地方.
 public @interface EnableFeignClients {
 
 	/**
@@ -84,6 +86,8 @@ public @interface EnableFeignClients {
 	 * List of classes annotated with @FeignClient. If not empty, disables classpath
 	 * scanning.
 	 * @return list of FeignClient classes
+	 *
+	 * 这里应该是所有的client的地方, 但是是谁放进去的?????
 	 */
 	Class<?>[] clients() default {};
 

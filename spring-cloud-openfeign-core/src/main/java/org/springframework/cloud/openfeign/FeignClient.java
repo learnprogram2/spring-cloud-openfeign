@@ -33,6 +33,8 @@ import org.springframework.core.annotation.AliasFor;
  *
  * @author Spencer Gibb
  * @author Venil Noronha
+ * 
+ * 这是一个简单的注解, 并不是@Configration
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -93,6 +95,8 @@ public @interface FeignClient {
 	 *
 	 * @see FeignClientsConfiguration for the defaults
 	 * @return list of configurations for feign client
+	 *
+	 * client自己的config. Decoder/Encoder/Contract...之类的.
 	 */
 	Class<?>[] configuration() default {};
 
