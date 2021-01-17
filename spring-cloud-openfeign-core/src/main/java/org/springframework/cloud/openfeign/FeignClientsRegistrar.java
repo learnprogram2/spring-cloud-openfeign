@@ -157,6 +157,7 @@ class FeignClientsRegistrar
 
 		// 2. 所以一般也不会进入这里.
 		if (defaultAttrs != null && defaultAttrs.containsKey("defaultConfiguration")) {
+			// 这就是找到@EnableFeignClient标注在的class的className
 			String name;
 			if (metadata.hasEnclosingClass()) {
 				name = "default." + metadata.getEnclosingClassName();
@@ -229,7 +230,7 @@ class FeignClientsRegistrar
 		String className = annotationMetadata.getClassName();
 		// 其实就是注册了一个FeignClientFactoryBean
 		BeanDefinitionBuilder definition = BeanDefinitionBuilder
-				.genericBeanDefinition(FeignClientFactoryBean.class);
+				.genericBeanDefinition(FeignClientFactoryBean.class); // GenericBeanDefinition
 		validate(attributes);
 		definition.addPropertyValue("url", getUrl(attributes));
 		definition.addPropertyValue("path", getPath(attributes));
@@ -244,7 +245,7 @@ class FeignClientsRegistrar
 		definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
 
 		String alias = contextId + "FeignClient";
-		AbstractBeanDefinition beanDefinition = definition.getBeanDefinition();
+		AbstractBeanDefinition beanDefinition = definition.getBeanDefinition(); // GenericBeanDefinition
 		beanDefinition.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE, className);
 
 		// has a default, won't be null
@@ -265,7 +266,7 @@ class FeignClientsRegistrar
 	private void validate(Map<String, Object> attributes) {
 		AnnotationAttributes annotation = AnnotationAttributes.fromMap(attributes);
 		// This blows up if an aliased property is overspecified
-		// FIXME annotation.getAliasedString("name", FeignClient.class, null);
+		//  annotation.getAliasedString("name", FeignClient.class, null);
 		validateFallback(annotation.getClass("fallback"));
 		validateFallbackFactory(annotation.getClass("fallbackFactory"));
 	}
@@ -385,6 +386,8 @@ class FeignClientsRegistrar
 				+ FeignClient.class.getSimpleName());
 	}
 
+	// 这个是给所有feignClient的配置. 注册一个"default.org.server.ServerApplication.FeignClientSpecification"
+	// 其它的feignCLient的配置bean名字叫: "{serverName}.org.server.ServerApplication.FeignClientSpecification"
 	private void registerClientConfiguration(BeanDefinitionRegistry registry, Object name,
 			Object configuration) {
 		BeanDefinitionBuilder builder = BeanDefinitionBuilder

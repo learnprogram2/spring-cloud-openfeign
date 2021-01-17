@@ -55,6 +55,8 @@ import org.springframework.context.annotation.Import;
 /**
  * @author Spencer Gibb
  * @author Julien Roy
+ *
+ * 这里默认的引入配置了.
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(Feign.class)
@@ -63,6 +65,7 @@ import org.springframework.context.annotation.Import;
 @Import(DefaultGzipDecoderConfiguration.class)
 public class FeignAutoConfiguration {
 
+	// 这个里面是 default.xxxx 的配置类, 在容器里面的名字叫: {serverName}.org.server.ServerApplication.FeignClientSpecification
 	@Autowired(required = false)
 	private List<FeignClientSpecification> configurations = new ArrayList<>();
 
@@ -71,6 +74,9 @@ public class FeignAutoConfiguration {
 		return HasFeatures.namedFeature("Feign", Feign.class);
 	}
 
+	// 这里是默认的feignContext: spring容器.
+	// TODO 这个里面要找到feign的几个组件: logger, encoder, decoder, contract, 还有: Feign.Builder.
+	// 		看看这个里面怎么弄的这几个组件和builder. FeignClientsConfiguration这个是配置.
 	@Bean
 	public FeignContext feignContext() {
 		FeignContext context = new FeignContext();

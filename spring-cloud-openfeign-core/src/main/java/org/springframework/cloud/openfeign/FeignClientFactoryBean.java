@@ -58,9 +58,13 @@ import org.springframework.util.StringUtils;
  * @author Matt King
  * @author Olga Maciaszek-Sharma
  * @author Ilia Ilinykh
+ *
+ * 这是feignClient的工厂bean.
  */
 class FeignClientFactoryBean
-		implements FactoryBean<Object>, InitializingBean, ApplicationContextAware {
+		implements FactoryBean<Object>,
+	InitializingBean,
+	ApplicationContextAware {
 
 	/***********************************
 	 * WARNING! Nothing in this class should be @Autowired. It causes NPEs because of some
@@ -69,6 +73,7 @@ class FeignClientFactoryBean
 
 	private Class<?> type;
 
+	// 下面包含了@FeignCLient的属性.
 	private String name;
 
 	private String url;
@@ -97,10 +102,14 @@ class FeignClientFactoryBean
 		Assert.hasText(name, "Name must be set");
 	}
 
+	// 拿到builder.
 	protected Feign.Builder feign(FeignContext context) {
+		// 1. 从context里面拿到logger
 		FeignLoggerFactory loggerFactory = get(context, FeignLoggerFactory.class);
 		Logger logger = loggerFactory.create(type);
 
+		// 2. 从context里面拿到叫contextId的类型是feign.Builder的对象,
+		// 		然后从context里面拿出来所有的配置, 设置给builder
 		// @formatter:off
 		Feign.Builder builder = get(context, Feign.Builder.class)
 				// required values
@@ -110,15 +119,18 @@ class FeignClientFactoryBean
 				.contract(get(context, Contract.class));
 		// @formatter:on
 
+		// 3. 配置builder
 		configureFeign(context, builder);
 
 		return builder;
 	}
 
 	protected void configureFeign(FeignContext context, Feign.Builder builder) {
+		// 这里是默认配置.
 		FeignClientProperties properties = applicationContext
 				.getBean(FeignClientProperties.class);
 
+		// 这个是手动配置. FeignClientConfigurer
 		FeignClientConfigurer feignClientConfigurer = getOptional(context,
 				FeignClientConfigurer.class);
 		setInheritParentContext(feignClientConfigurer.inheritParentConfiguration());
@@ -132,10 +144,13 @@ class FeignClientFactoryBean
 				configureUsingProperties(properties.getConfig().get(contextId), builder);
 			}
 			else {
+				// 默认配置
 				configureUsingProperties(
 						properties.getConfig().get(properties.getDefaultConfig()),
 						builder);
+				// client的配置
 				configureUsingProperties(properties.getConfig().get(contextId), builder);
+				// yml的配置.
 				configureUsingConfiguration(context, builder);
 			}
 		}
@@ -268,6 +283,7 @@ class FeignClientFactoryBean
 		}
 	}
 
+	// 拿到或者举例.
 	private <T> T getOrInstantiate(Class<T> tClass) {
 		try {
 			return applicationContext.getBean(tClass);
@@ -278,6 +294,7 @@ class FeignClientFactoryBean
 	}
 
 	protected <T> T get(FeignContext context, Class<T> type) {
+		// 1. 从context里面拿contextId这个名字的{Feign.Builder}
 		T instance = context.getInstance(contextId, type);
 		if (instance == null) {
 			throw new IllegalStateException(
@@ -322,6 +339,12 @@ class FeignClientFactoryBean
 				"No Feign Client for loadBalancing defined. Did you forget to include spring-cloud-starter-netflix-ribbon?");
 	}
 
+	//
+
+	/**
+	 * TODO 这个应该是factoryBean拿bean的入口. Before: 感觉是 在{@link FeignClientsRegistrar#registerFeignClient()}设置好beanDefinition之后,
+	 * 用feignClient的时候,会进来拿到feignClient.
+	 */
 	@Override
 	public Object getObject() throws Exception {
 		return getTarget();
@@ -331,11 +354,15 @@ class FeignClientFactoryBean
 	 * @param <T> the target type of the Feign client
 	 * @return a {@link Feign} client created with the specified data and the context
 	 * information
+	 *
+	 * FeignClient的类型.
 	 */
 	<T> T getTarget() {
+		// 1. 从spring里面拿到feignContext., 从context里面拿到contextId的builder (为serverName所分配的spring和里面的builder.
 		FeignContext context = applicationContext.getBean(FeignContext.class);
 		Feign.Builder builder = feign(context);
 
+		// 2. 把URL拼接一下
 		if (!StringUtils.hasText(url)) {
 			if (!name.startsWith("http")) {
 				url = "http://" + name;
@@ -344,9 +371,12 @@ class FeignClientFactoryBean
 				url = name;
 			}
 			url += cleanPath();
+			// 拼装好了直接就返回了.
 			return (T) loadBalance(builder, context,
 					new HardCodedTarget<>(type, name, url));
 		}
+
+		// 3. option: 如果由url就开始:
 		if (StringUtils.hasText(url) && !url.startsWith("http")) {
 			url = "http://" + url;
 		}

@@ -63,6 +63,9 @@ import static feign.form.ContentType.MULTIPART;
  * @author Dave Syer
  * @author Venil Noronha
  * @author Darren Foong
+ *
+ * 这个是feignContext里面为每个feignClient的spring的默认配置类.
+ * 这个里面有feignClientFactoryBean中创建feignClient所需要的默认配置噢.
  */
 @Configuration(proxyBeanMethods = false)
 public class FeignClientsConfiguration {
@@ -82,6 +85,7 @@ public class FeignClientsConfiguration {
 	@Autowired(required = false)
 	private SpringDataWebProperties springDataWebProperties;
 
+	// 这个是feignClient创建里面需要的decoder
 	@Bean
 	@ConditionalOnMissingBean
 	public Decoder feignDecoder() {
@@ -136,11 +140,14 @@ public class FeignClientsConfiguration {
 		return Retryer.NEVER_RETRY;
 	}
 
+
+	// 这个就是在feignClientFactoryBean中从自己的spring里面拿到的feignBuilder.
+	// 实际应用feign结合hystrix, 是不会走这个的.
 	@Bean
 	@Scope("prototype")
 	@ConditionalOnMissingBean
 	public Feign.Builder feignBuilder(Retryer retryer) {
-		return Feign.builder().retryer(retryer);
+		return Feign.builder().retryer(retryer); // 默认不重试.
 	}
 
 	@Bean
@@ -180,6 +187,7 @@ public class FeignClientsConfiguration {
 		}
 	}
 
+	// 这个要和hystrix结合.
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnClass({ HystrixCommand.class, HystrixFeign.class })
 	protected static class HystrixFeignConfiguration {

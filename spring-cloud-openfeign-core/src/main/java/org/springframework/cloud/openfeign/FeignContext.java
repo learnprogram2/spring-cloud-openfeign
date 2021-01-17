@@ -22,6 +22,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.cloud.context.named.NamedContextFactory;
 import org.springframework.lang.Nullable;
+import org.springframework.cloud.netflix.ribbon.SpringClientFactory;
 
 /**
  * A factory that creates instances of feign classes. It creates a Spring
@@ -30,6 +31,10 @@ import org.springframework.lang.Nullable;
  * @author Spencer Gibb
  * @author Dave Syer
  * @author Matt King
+ *
+ * 这个和ribbon的 {@link SpringClientFactory} 一样, 也是一个<key, spring>的容器, 维持着多个springContext.
+ *
+ * FIXME 注意: 这个最重要的是FeignClientsConfiguration这个配置噢.
  */
 public class FeignContext extends NamedContextFactory<FeignClientSpecification> {
 
@@ -37,6 +42,7 @@ public class FeignContext extends NamedContextFactory<FeignClientSpecification> 
 		super(FeignClientsConfiguration.class, "feign", "feign.client.name");
 	}
 
+	// 这个我感觉spring的key 应该是: {contextId}(这就是服务的名字啊)
 	@Nullable
 	public <T> T getInstanceWithoutAncestors(String name, Class<T> type) {
 		try {

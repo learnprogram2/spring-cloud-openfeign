@@ -24,6 +24,8 @@ import org.springframework.cloud.context.named.NamedContextFactory;
 /**
  * @author Dave Syer
  * @author Gregor Zurowski
+ *
+ * 这个是给所有feignClient的配置
  */
 class FeignClientSpecification implements NamedContextFactory.Specification {
 
