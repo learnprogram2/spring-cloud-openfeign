@@ -31,15 +31,19 @@ import org.springframework.util.StringUtils;
 @SuppressWarnings("unchecked")
 class HystrixTargeter implements Targeter {
 
+	// 妈的源码连个注解都没有.
 	@Override
 	public <T> T target(FeignClientFactoryBean factory, Feign.Builder feign,
 			FeignContext context, Target.HardCodedTarget<T> target) {
+		// TODO 1. 如果发现feign不是HystrixFeign, 就会变成和DefaultTargeter一样的逻辑, 直接调用Feign.target(target)
 		if (!(feign instanceof feign.hystrix.HystrixFeign.Builder)) {
 			return feign.target(target);
 		}
 		feign.hystrix.HystrixFeign.Builder builder = (feign.hystrix.HystrixFeign.Builder) feign;
+		// 拿到serviceName
 		String name = StringUtils.isEmpty(factory.getContextId()) ? factory.getName()
 				: factory.getContextId();
+		//
 		SetterFactory setterFactory = getOptional(name, context, SetterFactory.class);
 		if (setterFactory != null) {
 			builder.setterFactory(setterFactory);

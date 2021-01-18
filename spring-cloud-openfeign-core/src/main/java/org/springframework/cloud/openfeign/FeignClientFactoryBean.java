@@ -329,10 +329,12 @@ class FeignClientFactoryBean
 	// 加上ribbon包装.
 	protected <T> T loadBalance(Feign.Builder builder, FeignContext context,
 			HardCodedTarget<T> target) {
-		// 1. 拿到client
+		// 1. 拿到client: 这里是: LoadBalancerFeignClient, 和ribbon关联了噢!!!!!!!!!!!!
 		Client client = getOptional(context, Client.class);
 		if (client != null) {
+			// 把client放在builder里面.
 			builder.client(client);
+			// 2. 拿到targeter: 默认是HystrixTargeter
 			Targeter targeter = get(context, Targeter.class);
 			return targeter.target(this, builder, context, target);
 		}

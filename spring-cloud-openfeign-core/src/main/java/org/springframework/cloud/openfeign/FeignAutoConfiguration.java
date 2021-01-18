@@ -88,6 +88,7 @@ public class FeignAutoConfiguration {
 	@ConditionalOnClass(name = "feign.hystrix.HystrixFeign")
 	protected static class HystrixFeignTargeterConfiguration {
 
+		// 这里是默认的target.
 		@Bean
 		@ConditionalOnMissingBean
 		public Targeter feignTargeter() {
