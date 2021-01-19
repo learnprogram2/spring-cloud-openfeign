@@ -169,14 +169,18 @@ public class SpringMvcContract extends Contract.BaseContract
 		this.resourceLoader = resourceLoader;
 	}
 
+	// TODO 这个是解析接口的@RequestMapping内容.
 	@Override
-	protected void processAnnotationOnClass(MethodMetadata data, Class<?> clz) {
+	protected void processAnnotationOnClass(MethodMetadata data, // 这个是@FeignClient标记的接口的方法
+											Class<?> clz) // 这个是最初的接口类, @FeignClient标记的父接口.
+	{
 		if (clz.getInterfaces().length == 0) {
-			RequestMapping classAnnotation = findMergedAnnotation(clz,
-					RequestMapping.class);
+			// 1. 拿到API接口的@requestMapping注解
+			RequestMapping classAnnotation = findMergedAnnotation(clz, RequestMapping.class);
 			if (classAnnotation != null) {
 				// Prepend path from class annotation if specified
 				if (classAnnotation.value().length > 0) {
+					// 2. 解析出@RequestMapping注解里面的路径, 然后拼好.
 					String pathValue = emptyToNull(classAnnotation.value()[0]);
 					pathValue = resolve(pathValue);
 					if (!pathValue.startsWith("/")) {
@@ -188,9 +192,12 @@ public class SpringMvcContract extends Contract.BaseContract
 		}
 	}
 
+	// TODO 解析出API的method的全部信息, 包装成MethodMetadata.
 	@Override
 	public MethodMetadata parseAndValidateMetadata(Class<?> targetType, Method method) {
+		// 1. 解析出method全限定名来, 然后搞到一个map里.
 		processedMethods.put(Feign.configKey(targetType, method), method);
+		// 2. 把method的类注解, 方法注解, 参数注解都解析一遍放在metadata里面.
 		MethodMetadata md = super.parseAndValidateMetadata(targetType, method);
 
 		RequestMapping classAnnotation = findMergedAnnotation(targetType,
@@ -213,6 +220,7 @@ public class SpringMvcContract extends Contract.BaseContract
 		return md;
 	}
 
+	// TODO 这个是处理方法上的spring注解.
 	@Override
 	protected void processAnnotationOnMethod(MethodMetadata data,
 			Annotation methodAnnotation, Method method) {
@@ -284,6 +292,7 @@ public class SpringMvcContract extends Contract.BaseContract
 				fieldName, values == null ? null : Arrays.asList(values));
 	}
 
+	// TODO 这个是处理一个方法里的每个param上面的注解
 	@Override
 	protected boolean processAnnotationsOnParameter(MethodMetadata data,
 			Annotation[] annotations, int paramIndex) {
@@ -293,6 +302,7 @@ public class SpringMvcContract extends Contract.BaseContract
 				data, paramIndex);
 		Method method = processedMethods.get(data.configKey());
 		for (Annotation parameterAnnotation : annotations) {
+			// 拿到paramProcess.
 			AnnotatedParameterProcessor processor = annotatedArgumentProcessors
 					.get(parameterAnnotation.annotationType());
 			if (processor != null) {
