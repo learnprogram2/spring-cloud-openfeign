@@ -57,6 +57,7 @@ public class CachingSpringLoadBalancerFactory {
 		if (client != null) {
 			return client;
 		}
+		// 从ribbon的spring里面拿clientConfig,和IClientBalancer
 		IClientConfig config = this.factory.getClientConfig(clientName);
 		ILoadBalancer lb = this.factory.getLoadBalancer(clientName);
 		ServerIntrospector serverIntrospector = this.factory.getInstance(clientName,
