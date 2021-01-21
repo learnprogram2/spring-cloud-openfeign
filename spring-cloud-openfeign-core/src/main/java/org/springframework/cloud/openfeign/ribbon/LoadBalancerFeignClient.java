@@ -32,6 +32,7 @@ import org.springframework.cloud.netflix.ribbon.SpringClientFactory;
 /**
  * @author Dave Syer
  *
+ * 这个是默认的loadBalancerFeignClient
  */
 public class LoadBalancerFeignClient implements Client {
 
@@ -72,14 +73,19 @@ public class LoadBalancerFeignClient implements Client {
 	@Override
 	public Response execute(Request request, Request.Options options) throws IOException {
 		try {
+			// 1. 包装成ribbonRequest
 			URI asUri = URI.create(request.url());
 			String clientName = asUri.getHost();
 			URI uriWithoutHost = cleanUrl(request.url(), clientName);
 			FeignLoadBalancer.RibbonRequest ribbonRequest = new FeignLoadBalancer.RibbonRequest(
 					this.delegate, request, uriWithoutHost);
 
+			// 2. 从ribbon的clientFactory里面拿到要调用的serverName的spring, 再拿到clientConfig
 			IClientConfig requestConfig = getClientConfig(options, clientName);
-			return lbClient(clientName)
+			return
+				// 3. 从spring里面拿loadBalancer(feignLoadBalancer)
+				lbClient(clientName)
+					// 4. 执行request/
 					.executeWithLoadBalancer(ribbonRequest, requestConfig).toResponse();
 		}
 		catch (ClientException e) {
