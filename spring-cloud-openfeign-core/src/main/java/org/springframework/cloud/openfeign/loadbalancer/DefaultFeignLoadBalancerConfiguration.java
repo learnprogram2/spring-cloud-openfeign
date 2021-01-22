@@ -45,6 +45,7 @@ class DefaultFeignLoadBalancerConfiguration {
 	@ConditionalOnMissingBean
 	@Conditional(OnRetryNotEnabledCondition.class)
 	public Client feignClient(BlockingLoadBalancerClient loadBalancerClient) {
+		// 这里是 loadBalancerFeignClient.
 		return new FeignBlockingLoadBalancerClient(new Client.Default(null, null),
 				loadBalancerClient);
 	}
